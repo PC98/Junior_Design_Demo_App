@@ -46,8 +46,34 @@
             </li>
         </ul>
     </div>
+
+    <div class='card'>
+        <h2 class='card_heading'>MAP LEGEND</h2>
+
+        <div class='legend_row' data-layer='layer_default'>
+            <div class = 'label' id='sensor'></div>
+            <div class='label'>Sea-level sensors</div>
+        </div>
+        <div class='legend_row' data-layer='layer_alt_1'>
+            <div class='colors'></div>
+            <div class='legend_text'>
+                <div class='label third'>5ft</div>
+                <div class='label third'>10ft</div>
+                <div class='label third'>15ft</div>
+            </div>
+        </div>
+
+        <div class='legend_row' data-layer='layer_alt_2'>
+            <div class='colors'></div>
+            <div class='legend_text'>
+                <div id='low_risk_label' class='label'>Low risk</div>
+                <div id='high_risk_label' class='label'>High risk</div>
+            </div>
+        </div>
+    </div>
 </div>
 <script>
+
 mapboxgl.accessToken = 'pk.eyJ1IjoicGNoYXdsYTgiLCJhIjoiY2pvb2IxeHhjMGFpbzNwcXJzbjkxenphbCJ9.PLLJazTRjDbljE9IniyWpg';
 const map = new mapboxgl.Map({
     container: 'map',
@@ -71,12 +97,77 @@ map.addControl(new mapboxgl.GeolocateControl({
     trackUserLocation: true
 }), 'bottom-right');
 
+const framesPerSecond = 15; 
+const initialOpacity = 1
+const initialRadius = 6;
+const maxRadius = 15;
+
+let radius = initialRadius;
+let opacity = initialOpacity;
+map.on('load', function () {
+    // Add a source and layer displaying a point which will be animated in a circle.
+    map.addSource('point', {
+        'type': 'geojson',
+        'data': {
+            'type': 'Point',
+            'coordinates': [
+                -80.88, 32.01
+            ]
+        }
+    });
+    map.addLayer({
+        'id': 'point',
+        'source': 'point',
+        'type': 'circle',
+        'paint': {
+            'circle-radius': initialRadius,
+            'circle-radius-transition': {duration: 0},
+            'circle-opacity-transition': {duration: 0},
+            'circle-color': '#007cbf'
+        }
+    });
+    map.addLayer({
+        'id': 'point1',
+        'source': 'point',
+        'type': 'circle',
+        'paint': {
+            'circle-radius': initialRadius,
+            'circle-color': '#007cbf'
+        }
+    });
+    function animateMarker(timestamp) {
+        setTimeout(function(){
+            requestAnimationFrame(animateMarker);
+            radius += (maxRadius - radius) / framesPerSecond;
+            opacity -= ( .9 / framesPerSecond );
+            if (opacity <= 0) {
+                radius = initialRadius;
+                opacity = initialOpacity;
+            } 
+            map.setPaintProperty('point', 'circle-radius', radius);
+            map.setPaintProperty('point', 'circle-opacity', opacity);
+
+        }, 1000 / framesPerSecond);
+        
+    }
+    // Start the animation.
+    animateMarker(0);
+});
+
 layer_default = $('#layer_default')[0]
 $(layer_default).css('color', layer_default.dataset.color)
 
 $('li').on('click',function() {
-    $('li').each(function(_) {   
+    $('li').each(function() {   
         $(this).css('color', 'black')
+    });
+    const id = this.id;
+    $('[data-layer^="layer_"]').each(function() {
+        if (this.dataset.layer === id) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
     });
     $(this).css('color', this.dataset.color)
 });
