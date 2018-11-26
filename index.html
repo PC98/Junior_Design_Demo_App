@@ -174,7 +174,6 @@ map.on('load', function () {
     // When a click event occurs on a feature in the point1 layer, open a popup at the
     // location of the feature, with HTML from its properties.
     map.on('click', 'point1', function (e) {
-        debugger;
         const coordinates = e.features[0].geometry.coordinates.slice();
         const id = e.features[0].properties.id;
         const loc = e.features[0].properties.loc;
